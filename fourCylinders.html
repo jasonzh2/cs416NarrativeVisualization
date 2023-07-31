@@ -1,0 +1,106 @@
+<html>
+    <script src='https://d3js.org/d3.v5.min.js'></script>
+    <script src='https://github.com/susielu/d3-annotation/blob/master/d3-annotation.js'></script>
+    <style>
+        circle {fill: lightblue; stroke: black;} 
+        #tooltip {
+            opacity: 0;
+            position: absolute;
+            text-align: center;
+            width: 100px; height: 100px;
+            background: white;
+            border: 0px;
+        }
+    </style>
+    <link rel="stylesheet" href="styles.css">
+    <body onload='init()'>
+        <h1 style="font-size:60px; text-align:center">Engine Cylinders Vs Average MPG</h1>
+        
+        <div class="tables_select_form" style="text-align: center;">
+            <form id="tableSelect" method="GET" action="">
+                <label for="tableSelect">Select Number of Cylinders:</label>
+                <select id="tablesSelectOption" onchange="updateTableSelectAction(this.value)">
+                    <option value="index.html">Electric</option>
+                    <option value="twoCylinders.html">Two Cylinders</option>
+                    <option value="fourCylinders.html" selected>Four Cylinders</option>
+                    <option value="sixCylinders.html">Six Cylinders</option>
+                    <option value="eightCylinders.html">Eight Cylinders</option>
+                    <option value="tenCylinders.html">Ten Cylinders</option>
+                    <option value="twelveCylinders.html">Twelve Cylinders</option>
+                </select>
+                <br><br>
+            </form>
+        </div>
+
+        <h2 style="text-align: center;">4 Cylinder Cars</h2>
+
+        <div id="tooltip"></div>
+
+        <div class = "svg" style="width: 100%; height: 100%; text-align: center;">
+            <svg viewBox="0 0 300 300" width=100% height=auto>
+            </svg>
+            <script>
+                async function init() {
+                    var tooltip = d3.select('#tooltip');
+                    
+                    const data = await d3.csv('https://flunky.github.io/cars2017.csv');
+    
+                    const averageCityMPG = data.filter(function(d,i){return d.EngineCylinders <= 4;}).map(d => +d.AverageCityMPG);
+                    var cxs= d3.scaleLog().base(10).domain([10,150]).range([0,200]);
+                    const xs = averageCityMPG.map(value => cxs(value));
+    
+                    const averageHighwayMPG = data.filter(function(d,i){return d.EngineCylinders <= 4;}).map(d => +d.AverageHighwayMPG);
+                    var cys= d3.scaleLog().base(10).domain([10,150]).range([200,0]);
+                    const ys = averageHighwayMPG.map(value => cys(value));
+                    const yss = averageHighwayMPG.map(value => cxs(value));
+    
+                    const engineCylinders = data.filter(function(d,i){return d.EngineCylinders <= 4;}).map(d => +d.EngineCylinders);
+                    const numCylinders = engineCylinders.map(value => value);
+                    const rs = engineCylinders.map(value => value+2);
+    
+                    d3.select('svg').append('g')
+                    .attr('transform','translate(50,50)')
+                    .selectAll('circle').data(data).enter().append('circle')
+                    .attr('cx',function(d,i) {return xs[i];})
+                    .attr('cy',function(d,i) {return ys[i];})
+                    .attr('r', function(d,i) {return rs[i];})
+                    .on('mouseover',function(d,i) {
+                        tooltip.style('opacity',1)
+                        .style('left',(d3.event.pageX)+'px')
+                        .style('top',(d3.event.pageY)+'px')
+                        .html(
+                            "Engine Cylinders: "+numCylinders[i]+" Average City MPG: "+xs[i]+ " Average Highway MPG: "+yss[i]
+                        );
+                    })
+                    .on('mouseout',function() {tooltip.style('opacity',0);});
+    
+                    d3.select('svg').append('g')
+                    .attr('transform','translate(50,50)')
+                    .call(d3.axisLeft(cys).tickValues([10,20,50,100]).tickFormat(d3.format('~s')));
+
+                    d3.select('svg').append("text")
+                    .attr("x", -150)
+                    .attr("y", 20)
+                    .style("text-anchor", "middle")
+                    .attr("transform", "rotate(-90)")
+                    .text("AverageHighwayMPG");
+        
+                    d3.select('svg').append('g')
+                    .attr('transform','translate(50,250)')
+                    .call(d3.axisBottom(cxs).tickValues([10,20,50,100]).tickFormat(d3.format('~s')));
+
+                    d3.select('svg').append("text")
+                    .attr("x", 150)
+                    .attr("y", 280)
+                    .style("text-anchor", "middle")
+                    .text("AverageCityMPG");
+                }
+            </script>
+        </div>
+        <script>
+            function updateTableSelectAction(src) {
+                window.location = src;
+            }
+        </script>
+    </body>
+</html>
